@@ -5,6 +5,12 @@
 #include <string>
 #include <string_view>
 
+namespace registry
+{
+	bool create_registry_values();
+	bool delete_registry_values();
+}
+
 std::uint32_t exec(std::string_view args)
 {
 	std::string cmd = "cmd /c " + std::string{ args };
