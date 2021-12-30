@@ -5,12 +5,33 @@
 #include <string>
 #include <string_view>
 
-std::uint32_t exec(std::string_view)
+std::uint32_t exec(std::string_view args)
 {
-	return 0;
+	std::string cmd = "cmd /c " + std::string{ args };
+
+	STARTUPINFO si{ .cb = sizeof(si) };
+	PROCESS_INFORMATION pi{};
+
+	if (!CreateProcess(nullptr, std::data(cmd), nullptr, nullptr, false, 0, nullptr, nullptr, &si, &pi))
+		return GetLastError();
+
+	WaitForSingleObject(pi.hProcess, INFINITE);
+
+	DWORD ret{};
+	GetExitCodeProcess(pi.hProcess, &ret);
+
+	CloseHandle(pi.hProcess);
+	CloseHandle(pi.hThread);
+
+	return ret;
 }
 
 int main()
 {
-	std::cout << "hello, friend." << std::endl;
+	std::atexit([]()
+	{
+		std::cin.get();
+	});
+
+	exec("echo hello, friend.");
 }
