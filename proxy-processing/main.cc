@@ -3,13 +3,15 @@
 
 #include <iostream>
 #include <array>
+#include <bit>
+#include <span>
 #include <string>
 #include <string_view>
 
 namespace registry
 {
-	bool create_registry_values();
-	bool delete_registry_values();
+	bool create_registry_values(const std::span<const std::string_view>&);
+	bool delete_registry_values(const std::span<const std::string_view>&);
 
 	namespace environment_variables
 	{
@@ -41,35 +43,40 @@ std::uint32_t exec(std::string_view args)
 
 int main()
 {
-	std::atexit([]()
-	{
-		std::cin.get();
-	});
-
+	registry::create_registry_values(registry::environment_variables::values);
 	exec("echo hello, friend.");
+	std::cin.get();
+	registry::delete_registry_values(registry::environment_variables::values);
 }
 
-bool registry::create_registry_values()
+bool registry::create_registry_values(const std::span<const std::string_view>& values)
 {
-	HKEY hkey = nullptr;
-	if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, std::data(registry::environment_variables::path), 0,
-		KEY_SET_VALUE, &hkey) != ERROR_SUCCESS)
-	{
+	if (std::size(values) == 0)
 		return false;
-	}
+
+	HKEY hkey = nullptr;
+	if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, std::data(registry::environment_variables::path), 0, KEY_SET_VALUE, &hkey) != ERROR_SUCCESS)
+		return false;
+
+	for (const auto& value : values)
+		RegSetValueEx(hkey, std::data(value), 0, REG_SZ, nullptr, 0);
 
 	RegCloseKey(hkey);
 	return true;
 }
 
-bool registry::delete_registry_values()
+bool registry::delete_registry_values(const std::span<const std::string_view>& values)
 {
-	HKEY hkey = nullptr;
-	if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, std::data(registry::environment_variables::path), 0,
-		KEY_QUERY_VALUE | KEY_SET_VALUE, &hkey) != ERROR_SUCCESS)
-	{
+	if (std::size(values) == 0)
 		return false;
-	}
+
+	HKEY hkey = nullptr;
+	if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, std::data(registry::environment_variables::path), 0, KEY_QUERY_VALUE | KEY_SET_VALUE, &hkey) != ERROR_SUCCESS)
+		return false;
+
+	for (const auto& value : values)
+		if (RegQueryValueEx(hkey, std::data(value), nullptr, nullptr, nullptr, nullptr) == ERROR_SUCCESS)
+			RegDeleteValue(hkey, std::data(value));
 
 	RegCloseKey(hkey);
 	return true;
