@@ -65,7 +65,7 @@ int main()
 
 bool registry::create_registry_values(const std::span<const std::string_view>& values, std::string_view data)
 {
-	if (std::size(values) == 0)
+	if (std::size(values) == 0 || std::size(data) == 0)
 		return false;
 
 	HKEY hkey = nullptr;
