@@ -14,7 +14,7 @@
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{83928f87-06bc-4da0-9520-35f708aec465}</ProjectGuid>
-    <RootNamespace>proxyprocessing</RootNamespace>
+    <RootNamespace>proxy-processing</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
@@ -83,6 +83,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="main.cc" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="resource.hh" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="proxy.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
