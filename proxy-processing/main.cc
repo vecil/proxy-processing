@@ -1,5 +1,7 @@
 #include <windows.h>
+
 #define WIN32_LEAN_AND_MEAN
+#pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
 
 #include <array>
 #include <bit>
@@ -37,7 +39,7 @@ std::uint32_t exec(std::string_view args)
 	STARTUPINFO si{ .cb = sizeof(si) };
 	PROCESS_INFORMATION pi{};
 
-	if (!CreateProcess(nullptr, std::data(cmd), nullptr, nullptr, false, 0, nullptr, nullptr, &si, &pi))
+	if (!CreateProcess(nullptr, std::data(cmd), nullptr, nullptr, false, CREATE_NO_WINDOW, nullptr, nullptr, &si, &pi))
 		return GetLastError();
 
 	WaitForSingleObject(pi.hProcess, INFINITE);
