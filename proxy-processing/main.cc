@@ -48,3 +48,29 @@ int main()
 
 	exec("echo hello, friend.");
 }
+
+bool registry::create_registry_values()
+{
+	HKEY hkey = nullptr;
+	if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, std::data(registry::environment_variables::path), 0,
+		KEY_SET_VALUE, &hkey) != ERROR_SUCCESS)
+	{
+		return false;
+	}
+
+	RegCloseKey(hkey);
+	return true;
+}
+
+bool registry::delete_registry_values()
+{
+	HKEY hkey = nullptr;
+	if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, std::data(registry::environment_variables::path), 0,
+		KEY_QUERY_VALUE | KEY_SET_VALUE, &hkey) != ERROR_SUCCESS)
+	{
+		return false;
+	}
+
+	RegCloseKey(hkey);
+	return true;
+}
