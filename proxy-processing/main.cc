@@ -1,7 +1,6 @@
 #include <windows.h>
 #define WIN32_LEAN_AND_MEAN
 
-#include <iostream>
 #include <array>
 #include <bit>
 #include <span>
@@ -54,10 +53,12 @@ std::uint32_t exec(std::string_view args)
 
 int main()
 {
-	registry::create_registry_values(registry::environment_variables::values, proxies::isen.proxy_address);
-	exec("echo hello, friend.");
-	std::cin.get();
-	registry::delete_registry_values(registry::environment_variables::values);
+	const std::string ping_command = "ping -n 1 -w 50 " + std::string{ proxies::isen.target_address };
+
+	if (exec(ping_command) == 0)
+		registry::create_registry_values(registry::environment_variables::values, proxies::isen.proxy_address);
+	else
+		registry::delete_registry_values(registry::environment_variables::values);
 }
 
 bool registry::create_registry_values(const std::span<const std::string_view>& values, std::string_view data)
