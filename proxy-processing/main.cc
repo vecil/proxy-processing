@@ -1,6 +1,9 @@
 #include <windows.h>
+#include <winhttp.h>
 
 #define WIN32_LEAN_AND_MEAN
+
+#pragma comment(lib, "winhttp.lib")
 #pragma comment(linker, "/SUBSYSTEM:windows /ENTRY:mainCRTStartup")
 
 #include <array>
@@ -27,6 +30,13 @@ namespace proxies
 
 	constexpr std::string_view ping_command = "ping -n 1 -w 50 wpad";
 	constexpr std::wstring_view website_to_ping = L"https://cloudflare.com";
+
+	WINHTTP_AUTOPROXY_OPTIONS autoproxy_options
+	{
+		.dwFlags = WINHTTP_AUTOPROXY_AUTO_DETECT,
+		.dwAutoDetectFlags = WINHTTP_AUTO_DETECT_TYPE_DHCP | WINHTTP_AUTO_DETECT_TYPE_DNS_A
+	};
+	WINHTTP_PROXY_INFO proxy_info{};
 }
 
 std::uint32_t exec(std::string_view args)
@@ -94,7 +104,30 @@ bool registry::delete_registry_values(const std::span<const std::string_view>& v
 	return true;
 }
 
-std::string retrieve_proxy_address()
+std::string proxies::retrieve_proxy_address()
 {
+	const HINTERNET winhttp_session = WinHttpOpen(nullptr, WINHTTP_ACCESS_TYPE_NO_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
+	if (winhttp_session == nullptr)
+		return {};
 
+	if (!WinHttpGetProxyForUrl(winhttp_session, std::data(proxies::website_to_ping), &autoproxy_options, &proxy_info))
+		return {};
+
+	if (proxy_info.lpszProxyBypass != nullptr)
+		GlobalFree(proxy_info.lpszProxyBypass);
+
+	if (proxy_info.lpszProxy == nullptr)
+		return {};
+
+	std::wstring wide_proxy_address{ proxy_info.lpszProxy };
+	GlobalFree(proxy_info.lpszProxy);
+
+	const auto size = WideCharToMultiByte(CP_UTF8, 0, &wide_proxy_address.at(0), (int)std::size(wide_proxy_address), nullptr, 0, nullptr, nullptr);
+	if (size <= 0)
+		return {};
+
+	std::string proxy_address(size, 0);
+	WideCharToMultiByte(CP_UTF8, 0, &wide_proxy_address.at(0), (int)std::size(wide_proxy_address), &proxy_address.at(0), size, nullptr, nullptr);
+
+	return std::string{ "http://" + proxy_address };
 }
