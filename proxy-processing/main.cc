@@ -23,13 +23,6 @@ namespace registry
 
 namespace proxies
 {
-	struct proxy
-	{
-		std::string_view target_address;
-		std::string_view proxy_address;
-	};
-
-	constexpr proxy isen{ "isen.isen.fr", "http://isen.isen.fr:3128" };
 	const std::string ping_command = "ping -n 1 -w 50 " + std::string{ isen.target_address };
 }
 
@@ -56,10 +49,13 @@ std::uint32_t exec(std::string_view args)
 
 int main()
 {
-	if (exec(proxies::ping_command) == 0)
-		registry::create_registry_values(registry::environment_variables::values, proxies::isen.proxy_address);
-	else
+	if (exec(proxies::ping_command) != 0)
+	{
 		registry::delete_registry_values(registry::environment_variables::values);
+		return 0;
+	}
+
+	registry::create_registry_values(registry::environment_variables::values, {});
 }
 
 bool registry::create_registry_values(const std::span<const std::string_view>& values, std::string_view data)
