@@ -30,6 +30,7 @@ namespace proxies
 	};
 
 	constexpr proxy isen{ "isen.isen.fr", "http://isen.isen.fr:3128" };
+	const std::string ping_command = "ping -n 1 -w 50 " + std::string{ isen.target_address };
 }
 
 std::uint32_t exec(std::string_view args)
@@ -55,9 +56,7 @@ std::uint32_t exec(std::string_view args)
 
 int main()
 {
-	const std::string ping_command = "ping -n 1 -w 50 " + std::string{ proxies::isen.target_address };
-
-	if (exec(ping_command) == 0)
+	if (exec(proxies::ping_command) == 0)
 		registry::create_registry_values(registry::environment_variables::values, proxies::isen.proxy_address);
 	else
 		registry::delete_registry_values(registry::environment_variables::values);
