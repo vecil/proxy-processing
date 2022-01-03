@@ -23,7 +23,8 @@ namespace registry
 
 namespace proxies
 {
-	const std::string ping_command = "ping -n 1 -w 50 " + std::string{ isen.target_address };
+	std::string retrieve_proxy_address();
+	constexpr std::string_view ping_command = "ping -n 1 -w 50 wpad";
 }
 
 std::uint32_t exec(std::string_view args)
