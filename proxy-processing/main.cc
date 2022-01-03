@@ -129,12 +129,12 @@ std::string proxies::retrieve_proxy_address()
 	std::wstring wide_proxy_address{ proxy_info.lpszProxy };
 	GlobalFree(proxy_info.lpszProxy);
 
-	const auto size = WideCharToMultiByte(CP_UTF8, 0, &wide_proxy_address.at(0), (int)std::size(wide_proxy_address), nullptr, 0, nullptr, nullptr);
+	const auto size = WideCharToMultiByte(CP_UTF8, 0, &wide_proxy_address.at(0), static_cast<int>(std::size(wide_proxy_address)), nullptr, 0, nullptr, nullptr);
 	if (size <= 0)
 		return {};
 
 	std::string proxy_address(size, 0);
-	WideCharToMultiByte(CP_UTF8, 0, &wide_proxy_address.at(0), (int)std::size(wide_proxy_address), &proxy_address.at(0), size, nullptr, nullptr);
+	WideCharToMultiByte(CP_UTF8, 0, &wide_proxy_address.at(0), static_cast<int>(std::size(wide_proxy_address)), &proxy_address.at(0), size, nullptr, nullptr);
 
 	return std::string{ "http://" + proxy_address };
 }
