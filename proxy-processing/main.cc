@@ -68,7 +68,14 @@ int main()
 		return 0;
 	}
 
-	registry::create_registry_values(registry::environment_variables::values, {});
+	const std::string proxy_address = proxies::retrieve_proxy_address();
+	if (std::empty(proxy_address))
+	{
+		registry::delete_registry_values(registry::environment_variables::values);
+		return 0;
+	}
+
+	registry::create_registry_values(registry::environment_variables::values, proxy_address);
 }
 
 bool registry::create_registry_values(const std::span<const std::string_view>& values, std::string_view data)
