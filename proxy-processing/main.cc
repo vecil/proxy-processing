@@ -24,7 +24,9 @@ namespace registry
 namespace proxies
 {
 	std::string retrieve_proxy_address();
+
 	constexpr std::string_view ping_command = "ping -n 1 -w 50 wpad";
+	constexpr std::wstring_view website_to_ping = L"https://cloudflare.com";
 }
 
 std::uint32_t exec(std::string_view args)
@@ -90,4 +92,9 @@ bool registry::delete_registry_values(const std::span<const std::string_view>& v
 
 	RegCloseKey(hkey);
 	return true;
+}
+
+std::string retrieve_proxy_address()
+{
+
 }
