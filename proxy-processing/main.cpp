@@ -62,20 +62,16 @@ std::uint32_t exec(std::string_view args)
 
 int main()
 {
-	if (exec(proxies::ping_command) != 0)
-	{
-		registry::delete_registry_values(registry::environment_variables::values);
-		return 0;
-	}
-
 	const std::string proxy_address = proxies::retrieve_proxy_address();
+
 	if (std::empty(proxy_address))
 	{
 		registry::delete_registry_values(registry::environment_variables::values);
-		return 0;
 	}
-
-	registry::create_registry_values(registry::environment_variables::values, proxy_address);
+	else
+	{
+		registry::create_registry_values(registry::environment_variables::values, proxy_address);
+	}
 }
 
 bool registry::create_registry_values(const std::span<const std::string_view>& values, std::string_view data)
