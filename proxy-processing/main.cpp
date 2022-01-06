@@ -27,8 +27,6 @@ namespace registry
 namespace proxies
 {
 	std::string retrieve_proxy_address();
-
-	constexpr std::string_view ping_command = "ping -n 1 -w 50 wpad";
 	constexpr std::wstring_view website_to_ping = L"https://cloudflare.com";
 
 	WINHTTP_AUTOPROXY_OPTIONS autoproxy_options
@@ -37,27 +35,6 @@ namespace proxies
 		.dwAutoDetectFlags = WINHTTP_AUTO_DETECT_TYPE_DHCP | WINHTTP_AUTO_DETECT_TYPE_DNS_A
 	};
 	WINHTTP_PROXY_INFO proxy_info{};
-}
-
-std::uint32_t exec(std::string_view args)
-{
-	std::string cmd = "cmd /c " + std::string{ args };
-
-	STARTUPINFO si{ .cb = sizeof(si) };
-	PROCESS_INFORMATION pi{};
-
-	if (!CreateProcess(nullptr, std::data(cmd), nullptr, nullptr, false, CREATE_NO_WINDOW, nullptr, nullptr, &si, &pi))
-		return GetLastError();
-
-	WaitForSingleObject(pi.hProcess, INFINITE);
-
-	DWORD ret{};
-	GetExitCodeProcess(pi.hProcess, &ret);
-
-	CloseHandle(pi.hProcess);
-	CloseHandle(pi.hThread);
-
-	return ret;
 }
 
 int main()
