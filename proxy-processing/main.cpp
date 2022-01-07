@@ -12,23 +12,25 @@
 #include <string>
 #include <string_view>
 
-using namespace std::literals;
-
 namespace registry
 {
-	auto create_registry_values(const std::span<const std::string_view>&, std::string_view) -> bool;
-	auto delete_registry_values(const std::span<const std::string_view>&) -> bool;
+	using namespace std::literals;
+
+	auto create_registry_values(const std::span<const std::wstring_view>, const std::wstring_view) -> bool;
+	auto delete_registry_values(const std::span<const std::wstring_view>) -> bool;
 
 	namespace environment_variables
 	{
-		constexpr auto path{ "SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment"sv };
-		constexpr auto values{ std::to_array({ "FTP_PROXY"sv, "HTTP_PROXY"sv, "HTTPS_PROXY"sv }) };
+		constexpr auto path{ L"SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment"sv };
+		constexpr auto values{ std::array{ L"FTP_PROXY"sv, L"HTTP_PROXY"sv, L"HTTPS_PROXY"sv } };
 	}
 }
 
-namespace proxies
+namespace proxy
 {
-	auto retrieve_proxy_address() -> std::string;
+	using namespace std::literals;
+
+	auto retrieve_proxy_address() -> std::wstring_view;
 	constexpr auto website_to_ping{ L"https://cloudflare.com"sv };
 
 	WINHTTP_AUTOPROXY_OPTIONS autoproxy_options
@@ -41,7 +43,7 @@ namespace proxies
 
 auto main() -> int
 {
-	const auto proxy_address{ proxies::retrieve_proxy_address() };
+	const auto proxy_address{ proxy::retrieve_proxy_address() };
 
 	if (std::empty(proxy_address))
 		registry::delete_registry_values(registry::environment_variables::values);
@@ -49,32 +51,32 @@ auto main() -> int
 		registry::create_registry_values(registry::environment_variables::values, proxy_address);
 }
 
-auto registry::create_registry_values(const std::span<const std::string_view>& values, std::string_view data) -> bool
+auto registry::create_registry_values(const std::span<const std::wstring_view> values, const std::wstring_view data) -> bool
 {
 	if (std::empty(values) || std::empty(data))
 		return false;
 
-	auto hkey{ HKEY{} };
+	HKEY hkey{};
 	if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, std::data(registry::environment_variables::path), 0, KEY_SET_VALUE, &hkey) != ERROR_SUCCESS)
 		return false;
 
-	for (const auto& value : values)
+	for (const auto value : values)
 		RegSetValueEx(hkey, std::data(value), 0, REG_SZ, std::bit_cast<const BYTE*>(std::data(data)), static_cast<DWORD>(std::size(data)));
 
 	RegCloseKey(hkey);
 	return true;
 }
 
-bool registry::delete_registry_values(const std::span<const std::string_view>& values)
+auto registry::delete_registry_values(const std::span<const std::wstring_view> values) -> bool
 {
 	if (std::empty(values))
 		return false;
 
-	auto hkey{ HKEY{} };
+	HKEY hkey{};
 	if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, std::data(registry::environment_variables::path), 0, KEY_QUERY_VALUE | KEY_SET_VALUE, &hkey) != ERROR_SUCCESS)
 		return false;
 
-	for (const auto& value : values)
+	for (const auto value : values)
 		if (RegQueryValueEx(hkey, std::data(value), nullptr, nullptr, nullptr, nullptr) == ERROR_SUCCESS)
 			RegDeleteValue(hkey, std::data(value));
 
@@ -82,15 +84,17 @@ bool registry::delete_registry_values(const std::span<const std::string_view>& v
 	return true;
 }
 
-std::string proxies::retrieve_proxy_address()
+auto proxy::retrieve_proxy_address() -> std::wstring_view
 {
 	const auto winhttp_session{ WinHttpOpen(nullptr, WINHTTP_ACCESS_TYPE_NO_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0) };
 	if (winhttp_session == nullptr)
 		return {};
 
-	if (!WinHttpGetProxyForUrl(winhttp_session, std::data(proxies::website_to_ping), &autoproxy_options, &proxy_info))
-		return {};
+	const auto did_get_proxy{ WinHttpGetProxyForUrl(winhttp_session, std::data(proxy::website_to_ping), &autoproxy_options, &proxy_info) };
 	WinHttpCloseHandle(winhttp_session);
+
+	if (!did_get_proxy)
+		return {};
 
 	if (proxy_info.lpszProxyBypass != nullptr)
 		GlobalFree(proxy_info.lpszProxyBypass);
@@ -98,15 +102,8 @@ std::string proxies::retrieve_proxy_address()
 	if (proxy_info.lpszProxy == nullptr)
 		return {};
 
-	const auto wide_proxy_address{ std::wstring{ proxy_info.lpszProxy } };
+	const auto proxy_address{ L"http://" + std::wstring{ proxy_info.lpszProxy } };
 	GlobalFree(proxy_info.lpszProxy);
 
-	const auto size{ WideCharToMultiByte(CP_UTF8, 0, &wide_proxy_address.at(0), static_cast<int>(std::size(wide_proxy_address)), nullptr, 0, nullptr, nullptr) };
-	if (size <= 0)
-		return {};
-
-	auto proxy_address{ std::string(size, 0) };
-	WideCharToMultiByte(CP_UTF8, 0, &wide_proxy_address.at(0), static_cast<int>(std::size(wide_proxy_address)), &proxy_address.at(0), size, nullptr, nullptr);
-
-	return std::string{ "http://" + proxy_address };
+	return std::wstring_view{ proxy_address };
 }
