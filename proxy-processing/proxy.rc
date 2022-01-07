@@ -27,7 +27,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 1 TEXTINCLUDE 
 BEGIN
-    "resource.hh\0"
+    "resource.hpp\0"
 END
 
 2 TEXTINCLUDE 
@@ -68,11 +68,11 @@ BEGIN
         BLOCK "040904b0"
         BEGIN
             VALUE "CompanyName", "Microsoft Corporation"
-            VALUE "FileDescription", "Proxy EXE"
+            VALUE "FileDescription", "Proxy Processing EXE"
             VALUE "FileVersion", "10.0.22000.1"
-            VALUE "InternalName", "Proxy EXE"
+            VALUE "InternalName", "Proxy Processing EXE"
             VALUE "LegalCopyright", "© Microsoft Corporation. All rights reserved."
-            VALUE "OriginalFilename", "Proxy EXE"
+            VALUE "OriginalFilename", "Proxy Processing EXE"
             VALUE "ProductName", "Microsoft® Windows® Operating System"
             VALUE "ProductVersion", "10.0.22000.1"
         END
