@@ -61,7 +61,7 @@ auto registry::create_registry_values(const std::span<const std::wstring_view> v
 		return false;
 
 	for (const auto value : values)
-		RegSetValueEx(hkey, std::data(value), 0, REG_SZ, std::bit_cast<const BYTE*>(std::data(data)), static_cast<DWORD>(std::size(data)));
+		RegSetKeyValue(hkey, nullptr, std::data(value), REG_SZ, std::bit_cast<const void*>(std::data(data)), static_cast<DWORD>(std::size(data) * sizeof(data[0])));
 
 	RegCloseKey(hkey);
 	return true;
@@ -78,7 +78,7 @@ auto registry::delete_registry_values(const std::span<const std::wstring_view> v
 
 	for (const auto value : values)
 		if (RegQueryValueEx(hkey, std::data(value), nullptr, nullptr, nullptr, nullptr) == ERROR_SUCCESS)
-			RegDeleteValue(hkey, std::data(value));
+			RegDeleteKeyValue(hkey, nullptr, std::data(value));
 
 	RegCloseKey(hkey);
 	return true;
