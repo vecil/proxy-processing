@@ -16,7 +16,7 @@ namespace registry
 {
 	using namespace std::literals;
 
-	auto create_registry_values(const std::span<const std::wstring_view>, const std::wstring&) -> bool;
+	auto create_registry_values(const std::span<const std::wstring_view>, const std::wstring_view) -> bool;
 	auto delete_registry_values(const std::span<const std::wstring_view>) -> bool;
 
 	namespace environment_variables
@@ -51,7 +51,7 @@ auto main() -> int
 		registry::create_registry_values(registry::environment_variables::values, proxy_address);
 }
 
-auto registry::create_registry_values(const std::span<const std::wstring_view> values, const std::wstring& data) -> bool
+auto registry::create_registry_values(const std::span<const std::wstring_view> values, const std::wstring_view data) -> bool
 {
 	if (std::empty(values) || std::empty(data))
 		return false;
