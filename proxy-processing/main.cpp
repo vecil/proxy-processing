@@ -16,7 +16,7 @@ namespace registry
 {
 	using namespace std::literals;
 
-	auto create_registry_values(const std::span<const std::wstring_view>, const std::wstring_view) -> bool;
+	auto create_registry_values(const std::span<const std::wstring_view>, const std::wstring&) -> bool;
 	auto delete_registry_values(const std::span<const std::wstring_view>) -> bool;
 
 	namespace environment_variables
@@ -30,7 +30,7 @@ namespace proxy
 {
 	using namespace std::literals;
 
-	auto retrieve_proxy_address() -> std::wstring_view;
+	auto retrieve_proxy_address() -> std::wstring;
 	constexpr auto website_to_ping{ L"https://cloudflare.com"sv };
 
 	WINHTTP_AUTOPROXY_OPTIONS autoproxy_options
@@ -51,7 +51,7 @@ auto main() -> int
 		registry::create_registry_values(registry::environment_variables::values, proxy_address);
 }
 
-auto registry::create_registry_values(const std::span<const std::wstring_view> values, const std::wstring_view data) -> bool
+auto registry::create_registry_values(const std::span<const std::wstring_view> values, const std::wstring& data) -> bool
 {
 	if (std::empty(values) || std::empty(data))
 		return false;
@@ -60,8 +60,11 @@ auto registry::create_registry_values(const std::span<const std::wstring_view> v
 	if (RegOpenKeyEx(HKEY_LOCAL_MACHINE, std::data(registry::environment_variables::path), 0, KEY_SET_VALUE, &hkey) != ERROR_SUCCESS)
 		return false;
 
+	// Include the null character and compute the size, as a wchar_t's size is implementation-defined (16 bits on Windows).
+	const auto data_size{ static_cast<DWORD>((std::size(data) + 1) * sizeof(data[0])) };
+
 	for (const auto value : values)
-		RegSetKeyValue(hkey, nullptr, std::data(value), REG_SZ, std::bit_cast<const void*>(std::data(data)), static_cast<DWORD>(std::size(data) * sizeof(data[0])));
+		RegSetKeyValue(hkey, nullptr, std::data(value), REG_SZ, std::data(data), data_size);
 
 	RegCloseKey(hkey);
 	return true;
@@ -77,14 +80,14 @@ auto registry::delete_registry_values(const std::span<const std::wstring_view> v
 		return false;
 
 	for (const auto value : values)
-		if (RegQueryValueEx(hkey, std::data(value), nullptr, nullptr, nullptr, nullptr) == ERROR_SUCCESS)
+		if (RegGetValue(hkey, nullptr, std::data(value), RRF_RT_REG_SZ, nullptr, nullptr, nullptr) == ERROR_SUCCESS)
 			RegDeleteKeyValue(hkey, nullptr, std::data(value));
 
 	RegCloseKey(hkey);
 	return true;
 }
 
-auto proxy::retrieve_proxy_address() -> std::wstring_view
+auto proxy::retrieve_proxy_address() -> std::wstring
 {
 	const auto winhttp_session{ WinHttpOpen(nullptr, WINHTTP_ACCESS_TYPE_NO_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0) };
 	if (winhttp_session == nullptr)
@@ -105,5 +108,5 @@ auto proxy::retrieve_proxy_address() -> std::wstring_view
 	const auto proxy_address{ L"http://" + std::wstring{ proxy_info.lpszProxy } };
 	GlobalFree(proxy_info.lpszProxy);
 
-	return std::wstring_view{ proxy_address };
+	return proxy_address;
 }
