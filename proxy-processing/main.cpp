@@ -28,10 +28,7 @@ namespace registry
 
 namespace proxy
 {
-	using namespace std::literals;
-
 	auto retrieve_proxy_address() -> std::wstring;
-	constexpr auto website_to_ping{ L"https://cloudflare.com"sv };
 
 	WINHTTP_AUTOPROXY_OPTIONS autoproxy_options
 	{
@@ -93,7 +90,7 @@ auto proxy::retrieve_proxy_address() -> std::wstring
 	if (winhttp_session == nullptr)
 		return {};
 
-	const auto did_get_proxy{ WinHttpGetProxyForUrl(winhttp_session, std::data(proxy::website_to_ping), &autoproxy_options, &proxy_info) };
+	const auto did_get_proxy{ WinHttpGetProxyForUrl(winhttp_session, L"https://cloudflare.com", &autoproxy_options, &proxy_info) };
 	WinHttpCloseHandle(winhttp_session);
 
 	if (!did_get_proxy)
