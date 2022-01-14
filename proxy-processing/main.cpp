@@ -12,34 +12,29 @@
 #include <string>
 #include <string_view>
 
-namespace registry
-{
+namespace registry {
 	using namespace std::literals;
 
 	auto create_registry_values(const std::span<const std::wstring_view>, const std::wstring_view) -> bool;
 	auto delete_registry_values(const std::span<const std::wstring_view>) -> bool;
 
-	namespace environment_variables
-	{
+	namespace environment_variables {
 		constexpr auto path{ L"SYSTEM\\CurrentControlSet\\Control\\Session Manager\\Environment"sv };
 		constexpr auto values{ std::array{ L"FTP_PROXY"sv, L"HTTP_PROXY"sv, L"HTTPS_PROXY"sv } };
 	}
 }
 
-namespace proxy
-{
+namespace proxy {
 	auto retrieve_proxy_address() -> std::wstring;
 
-	WINHTTP_AUTOPROXY_OPTIONS autoproxy_options
-	{
+	WINHTTP_AUTOPROXY_OPTIONS autoproxy_options {
 		.dwFlags{ WINHTTP_AUTOPROXY_AUTO_DETECT },
 		.dwAutoDetectFlags{ WINHTTP_AUTO_DETECT_TYPE_DHCP | WINHTTP_AUTO_DETECT_TYPE_DNS_A }
 	};
 	WINHTTP_PROXY_INFO proxy_info{};
 }
 
-auto main() -> int
-{
+auto main() -> int {
 	const auto proxy_address{ proxy::retrieve_proxy_address() };
 
 	if (std::empty(proxy_address))
@@ -48,8 +43,7 @@ auto main() -> int
 		registry::create_registry_values(registry::environment_variables::values, proxy_address);
 }
 
-auto registry::create_registry_values(const std::span<const std::wstring_view> values, const std::wstring_view data) -> bool
-{
+auto registry::create_registry_values(const std::span<const std::wstring_view> values, const std::wstring_view data) -> bool {
 	if (std::empty(values) || std::empty(data))
 		return false;
 
@@ -67,8 +61,7 @@ auto registry::create_registry_values(const std::span<const std::wstring_view> v
 	return true;
 }
 
-auto registry::delete_registry_values(const std::span<const std::wstring_view> values) -> bool
-{
+auto registry::delete_registry_values(const std::span<const std::wstring_view> values) -> bool {
 	if (std::empty(values))
 		return false;
 
@@ -84,8 +77,7 @@ auto registry::delete_registry_values(const std::span<const std::wstring_view> v
 	return true;
 }
 
-auto proxy::retrieve_proxy_address() -> std::wstring
-{
+auto proxy::retrieve_proxy_address() -> std::wstring {
 	const auto winhttp_session{ WinHttpOpen(nullptr, WINHTTP_ACCESS_TYPE_NO_PROXY, WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0) };
 	if (winhttp_session == nullptr)
 		return {};
